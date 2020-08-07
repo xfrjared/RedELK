@@ -4,13 +4,13 @@ x509_extensions = v3_req
 prompt = no
 
 [req_distinguished_name]
-C = MODIFYME, for example NL
-ST = MODIFYME, for example Noord-Holland
-L = MODIFYME, for example Amsterdam
-O = MODIFYME, for example Outflank B.V.
-OU = MODIFYME, for example IT-OPS
-CN = MODIFYME, for example outflank.nl
-emailAddress = MODIFYME, for example totallynotavirus@outflank.nl
+C = @@C_VALUE@@, for example NL
+ST = @@ST_VALUE@@, for example Noord-Holland
+L = @@L_VALUE@@, for example Amsterdam
+O = @@O_VALUE@@, for example Outflank B.V.
+OU = @@OU_VALUE@@, for example IT-OPS
+CN = @@CN_VALUE@@, for example outflank.nl
+emailAddress = @@EMAIL_VALUE@@, for example totallynotavirus@outflank.nl
 
 [v3_ca]
 subjectKeyIdentifier = hash
@@ -24,6 +24,4 @@ subjectAltName = @alt_names
 
 [alt_names]
 # Enter the valid IP or DNS where the teamservers and redirectors can reach your ELK server in the fields below. If not done correclty, Logstash on your ELK server will crash with cryptic errors.
-DNS.1 = dnsnameofyourredelkserver
-DNS.2 = someseconddnsname
-IP.1 = 123.123.123.123
+@@ALT_NAMES@@

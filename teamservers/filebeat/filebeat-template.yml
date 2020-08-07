@@ -4,7 +4,7 @@ filebeat.prospectors:
   enabled: true
   fields_under_root: true
   paths:
-    - /root/cobaltstrike/logs/*/events.log
+    - COBALT_STRIKE_PATH/logs/*/events.log
   fields:
     infralogtype: rtops
     cslogtype: events
@@ -14,7 +14,7 @@ filebeat.prospectors:
   enabled: true
   fields_under_root: true
   paths:
-    - /root/cobaltstrike/logs/*/weblog.log
+    - COBALT_STRIKE_PATH/logs/*/weblog.log
   fields:
     infralogtype: rtops
     cslogtype: weblog
@@ -24,7 +24,7 @@ filebeat.prospectors:
   enabled: true
   fields_under_root: true
   paths:
-    - /root/cobaltstrike/logs/*/downloads.log
+    - COBALT_STRIKE_PATH/logs/*/downloads.log
   fields:
     infralogtype: rtops
     cslogtype: downloads
@@ -34,7 +34,7 @@ filebeat.prospectors:
   enabled: true
   fields_under_root: true
   paths:
-    - /root/cobaltstrike/logs/*/*/beacon_*.log
+    - COBALT_STRIKE_PATH/logs/*/*/beacon_*.log
   # Since Cobalt Strike version 3.14 the time format in the logs is changed. Here we use regex 'or' function (expr1)|(expr2) to match new or old format
   multiline.pattern: '(^\d\d\/\d\d\s\d\d\:\d\d\:\d\d\sUTC\s\[)|(^\d\d\/\d\d\s\d\d\:\d\d\:\d\d\s\[)' # match "06/19 12:32:56 UTC [" or "06/19 12:32:56 ["
   multiline.negate: true
@@ -48,7 +48,7 @@ filebeat.prospectors:
   enabled: true
   fields_under_root: true
   paths:
-    - /root/cobaltstrike/logs/*/*/keystrokes/keystrokes_*.txt
+    - @@COBALT_STRIKE_PATH@@/logs/*/*/keystrokes/keystrokes_*.txt
   # Since Cobalt Strike version 3.14 the time format in the logs is changed. Here we use regex 'or' function (expr1)|(expr2) to match new or old format
   multiline.pattern: '(^\d\d\/\d\d\s\d\d\:\d\d\:\d\d\sUTC\s\[)|(^\d\d\/\d\d\s\d\d\:\d\d\:\d\d\s\[)' # match "06/19 12:32:56 UTC [" or "06/19 12:32:56 ["
   multiline.negate: true

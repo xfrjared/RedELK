@@ -8,8 +8,19 @@
 
 LOGFILE="redelk-install.log"
 INSTALLER="RedELK redirector installer"
-TIMEZONE="Europe/Amsterdam"
+TIMEZONE=LOGGING_TIMEZONE
 ELKVERSION="6.8.2"
+
+SCENARIO=$1
+FILEBEAT_NAME=$2
+
+if [-z $FILEBEAT_NAME]; then
+    FILEBEAT_NAME=$HOSTNAME
+done
+
+if [-z $SCENARIO]; then
+    $SCENARIO="Default"
+done
 
 #set default locale
 export LC_ALL="en_US.UTF-8"
@@ -141,24 +152,17 @@ if [ $ERROR -ne 0 ]; then
 fi
 
 echo "Altering hostname field in filebeat config"
-sed -i s/'@@HOSTNAME@@'/$1/g /etc/filebeat/filebeat.yml  >> $LOGFILE 2>&1
+sed -i s/'@@HOSTNAME@@'/$FILEBEAT_NAME/g /etc/filebeat/filebeat.yml  >> $LOGFILE 2>&1
 ERROR=$?
 if [ $ERROR -ne 0 ]; then
     echoerror "Could not change hostname field in filebeat config (Error Code: $ERROR)."
 fi
 
 echo "Altering attackscenario field in filebeat config "
-sed -i s/'@@ATTACKSCENARIO@@'/$2/g /etc/filebeat/filebeat.yml >> $LOGFILE 2>&1
+sed -i s/'@@ATTACKSCENARIO@@'/$SCENARIO/g /etc/filebeat/filebeat.yml >> $LOGFILE 2>&1
 ERROR=$?
 if [ $ERROR -ne 0 ]; then
     echoerror "Could not change attackscenario field in filebeat config (Error Code: $ERROR)."
-fi
-
-echo "Altering log destination field in filebeat config "
-sed -i s/'@@HOSTANDPORT@@'/$3/g /etc/filebeat/filebeat.yml >> $LOGFILE 2>&1
-ERROR=$?
-if [ $ERROR -ne 0 ]; then
-    echoerror "Could not change log destination field in filebeat config (Error Code: $ERROR)."
 fi
 
 echo "Altering logrotate settings for HAProxy - rotate weekly instead of daily"

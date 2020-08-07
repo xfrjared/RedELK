@@ -11,6 +11,7 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # Repeat line for multiple teamservers.
 # m h dom mon dow user  command
 #*/2 * * * * redelk /usr/share/redelk/bin/getremotelogs.sh $IP $HOSTNAME scponly
+@@REDELK_RSYNC_COMMANDS@@
 
 # Run update script for TOR exit nodes twice a day
 # m h dom mon dow user  command

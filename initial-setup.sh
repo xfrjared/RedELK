@@ -5,6 +5,29 @@
 #
 # Author: Outflank B.V. / Marc Smeets
 #
+# General stuff
+TIMEZONE="Europe/Amsterdam"
+
+# Cert stuff
+CERT_C="NL"
+CERT_ST="Noord-Holland"
+CERT_L="Amsterdam"
+CERT_O="Outflank B.V"
+CERT_OU="IT-OPS"
+CERT_CN="outflank.nl"
+CERT_EMAIL="totallynotavirus@outflank.nl"
+
+# REDELK Details
+REDELK_DNS=("REDELK_FQDN_1" "REDELK_FQDN_2")
+REDELK_IP=("REDELK_IP_1" "REDELK_IP_2")
+REDELK_COLLECTOR_URI="REDELK_FQDN_OR_IP:5044"
+
+# Teamserver stuff. If you only have one teamserver, remove the extra entries in the arrays
+IP_ADDRESSES=("IP_ADDRESS_1" "IP_ADDRESS_2")
+NAMES=("Name1" "Name2")
+COBALT_STRIKE_PATH="/root/cobaltstrike/"
+REDTEAM_DOMAINS=("outflank.nl" "www.c2.lol")
+
 
 LOGFILE="./redelk-inintialsetup.log"
 INSTALLER="RedELK cert and key installer"
@@ -16,22 +39,85 @@ echoerror() {
 echo "This script will generate necessary keys RedELK deployments"
 printf "`date +'%b %e %R'` $INSTALLER - Starting installer\n" > $LOGFILE 2>&1
 
-if ! [ $# -eq 1 ] ; then
-    echo "[X] ERROR missing parameter"
-    echo "[X] require 1st parameter: path of openssl config file"
-    echoerror "Incorrect amount of parameters"
-    exit 1
-fi
+cp ./certs/config-template.cnf ./certs/config-generated.cnf
+sed -i "s/@@C_VALUE@@/$CERT_C/g" ./certs/config-generated.cnf
+sed -i "s/@@ST_VALUE@@/$CERT_ST/g" ./certs/config-generated.cnf
+sed -i "s/@@L_VALUE@@/$CERT_L/g" ./certs/config-generated.cnf
+sed -i "s/@@O_VALUE@@/$CERT_O/g" ./certs/config-generated.cnf
+sed -i "s/@@OU_VALUE@@/$CERT_OU/g" ./certs/config-generated.cnf
+sed -i "s/@@CN_VALUE@@/$CERT_CN/g" ./certs/config-generated.cnf
+sed -i "s/@@EMAIL_VALUE@@/$CERT_EMAIL/g" ./certs/config-generated.cnf
+sed -i "s/@@DNS_VALUE_1@@/$REDELK_DNS_1/g" ./certs/config-generated.cnf
+sed -i "s/@@DNS_VALUE_2@@/$REDELK_DNS_2/g" ./certs/config-generated.cnf
+sed -i "s/@@IP_ADDRESS@@/$REDELK_IP/g" ./certs/config-generated.cnf
 
-if [  ! -f $1 ];then
-    echo "[X]  ERROR Could not find openssl config file. Stopping"
-    echoerror "Could not find openssl config file"
-    exit 1
-fi >> $LOGFILE 2>&1
+ALT_NAME_ENTRIES=""
+for i in "${!REDELK_DNS[@]}"
+do
+    ALT_NAME_ENTRIES="$ALT_NAME_ENTRIES\n DNS.$1 ${REDELK_DNS[$1]}"
+done
+
+for i in "${!REDELK_IP[@]}"
+do
+    ALT_NAME_ENTRIES="$ALT_NAME_ENTRIES\n IP.$1 ${REDELK_IP[$1]}"
+done
+
+sed -i "s/@@ALT_ENTRIES@@/$ALT_NAME_ENTRIES/g" ./certs/config-generated.cnf
+
+
+cp ./teamservers/cron.d/redelk-template ./teamservers/cron.d/redelk
+sed -i "s/@@COBALT_STRIKE_PATH@@/$COBALT_STRIKE_PATH/g" ./teamservers/cron.d/redelk
+
+cp ./teamservers/filebeat/filebeat-template.yml ./teamservers/filebeat/filebeat.yml
+sed -i "s/@@COBALT_STRIKE_PATH@@/$COBALT_STRIKE_PATH/g" ./teamservers/filebeat/filebeat.yml
+sed -i "s/@@HOSTNAMEANDPORT@@/$REDELK_COLLECTOR_URI/g" ./teamservers/filebeat/filebeat.yml
+
+cp ./teamservers/scripts/copydownloads-template.sh ./teamservers/scripts/copydownloads.sh
+sed -i "s/@@COBALT_STRIKE_PATH@@/$COBALT_STRIKE_PATH/g" ./teamservers/scripts/copydownloads.sh
+
+cp ./elkserver/cron.d/redelk-template ./elkserver/cron.d/redelk
+CRON_EVENTS=""
+for i in "${!IP_ADDRESSES[@]}"
+do
+    CRON_EVENTS="$CRON_EVENTS\n*/2 * * * * redelk /usr/share/redelk/bin/getremotelogs.sh \"${IP_ADDRESSES[$i]}\" \"${HOSTNAME[$i]}\" scponly"
+done
+
+sed -i "s/@@REDELK_RSYNC_COMMANDS@@/$CRON_EVENTS/g" ./elkserver/cron.d/redelk
+
+cp ./elkserver/etc/redelk/redteamdomains-template.conf ./elkserver/etc/redelk/redteamdomains.conf
+ENGAGEMENT_DOMAINS=""
+for i in "${REDTEAM_DOMAINS[@]}"
+do
+    ENGAGEMENT_DOMAINS="$ENGAGEMENT_DOMAINS\n$i"
+done
+
+sed -i "s/@@REDTEAM_DOMAINS@@/$ENGAGEMENT_DOMAINS/g" ./elkserver/etc/redelk/redteamdomains.conf 
+
+cp ./teamservers/install-teamserver-template.sh ./teamservers/install-teamserver.sh
+sed -i "s/@@LOGGING_TIMEZONE@@/$TIMEZONE/g" ./teamservers/install-teamserver.sh
+
+cp ./redirs/install-redir-template.sh ./redirs/install-redir.sh
+sed -i "s/@@LOGGING_TIMEZONE@@/$TIMEZONE/g" ./redirs/install-redir.sh
+
+cp ./redirs/filebeat/filebeat-template.yml ./redirs/filebeat/filebeat.yml
+sed -i "s/@@HOSTNAMEANDPORT@@/$REDELK_COLLECTOR_URI/g" ./redirs/filebeat/filebeat.yml
+
+# if ! [ $# -eq 1 ] ; then
+#     echo "[X] ERROR missing parameter"
+#     echo "[X] require 1st parameter: path of openssl config file"
+#     echoerror "Incorrect amount of parameters"
+#     exit 1
+# fi
+
+# if [  ! -f $1 ];then
+#     echo "[X]  ERROR Could not find openssl config file. Stopping"
+#     echoerror "Could not find openssl config file"
+#     exit 1
+# fi >> $LOGFILE 2>&1
 
 echo ""
 echo "Will generate TLS certificates for the following DNS names and/or IP addresses:"
-grep -E "^DNS\.|^IP\." certs/config.cnf
+grep -E "^DNS\.|^IP\." certs/config-generated.cnf
 echo ""
 echo "[!] Make sure your ELK server will be reachable on these DNS names or IP addresses or your TLS setup will fail!"
 echo "Abort within 10 seconds to correct if needed."
